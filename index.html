@@ -32,7 +32,7 @@ html{scroll-behavior:smooth}
 body{background:var(--white);color:var(--ink);font-family:'Noto Sans KR',sans-serif;line-height:1.7;overflow-x:hidden}
 
 /* ═══ NAV ═══ */
-nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:#ffffff;border-bottom:2px solid var(--ku-green);transition:box-shadow .3s}
+nav{position:fixed;top:0;left:0;right:0;z-index:10000;background:#ffffff;border-bottom:2px solid var(--ku-green);transition:box-shadow .3s}
 nav.scrolled{box-shadow:var(--shadow-sm)}
 .nav-inner{max-width:1180px;margin:0 auto;padding:0 32px;height:68px;display:flex;align-items:center;justify-content:space-between;position:relative}
 .nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
@@ -40,7 +40,7 @@ nav.scrolled{box-shadow:var(--shadow-sm)}
 .nav-sep{width:1px;height:28px;background:var(--gray-100)}
 .nav-dept{font-size:13px;font-weight:700;color:var(--ku-green);letter-spacing:.02em}
 .nav-dept small{display:block;font-size:10px;font-weight:400;color:var(--gray-500);margin-top:1px}
-.nav-links{display:flex;align-items:center;gap:24px;list-style:none}
+.nav-links{align-items:center;gap:24px;list-style:none}
 .nav-links a{font-size:13px;font-weight:500;color:var(--gray-700);text-decoration:none;letter-spacing:.04em;padding:4px 0;border-bottom:2px solid transparent;transition:all .2s}
 .nav-links a:hover,.nav-links a.active{color:var(--ku-green);border-bottom-color:var(--ku-green)}
 .nav-cta{background:var(--ku-green)!important;color:#fff!important;padding:8px 18px!important;border-radius:3px!important;font-size:12px!important;font-weight:700!important;letter-spacing:.06em!important;border-bottom:none!important}
@@ -340,14 +340,10 @@ img, svg, table { max-width: 100%; }
   .nav-inner   { padding: 0 16px; height: 56px; }
   .nav-logo img { height: 30px; }
   .nav-sep, .nav-dept { display: none !important; }
-  /* Mobile: always compact */
-  nav .nav-links     { display: none !important; }
-  nav .nav-hamburger { display: flex !important; }
-  nav .nav-links.open { display: flex !important; }
+  /* nav handled by nav-state CSS */
   /* Mobile: full-width dropdown override */
   .nav-links.open { left:0!important; right:0!important; width:auto!important; border-radius:0!important; top:56px!important; border-left:none!important; }
   .nav-links.open a { padding:13px 20px!important; }
-  .nav-links   { display: none; }
   .nav-links.open {
     display: flex !important;
     flex-direction: column;
@@ -607,11 +603,12 @@ section[id] {
 
 /* ── HAMBURGER BUTTON (mobile only) ── */
 .nav-hamburger {
-  display: none;                     /* shown via JS when scrolled */
+  /* display controlled by #mainNav rules above */
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -620,6 +617,9 @@ section[id] {
   border-radius: 6px;
   transition: background .2s;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .nav-hamburger:hover,
 .nav-hamburger:active { background: var(--ku-pale); }
@@ -633,21 +633,72 @@ section[id] {
 }
 
 
-/* ── Nav: hamburger always visible by default ── */
-/* Full links only when JS confirms hero is at top (body.at-hero) */
-nav .nav-hamburger                   { display: flex !important; }
-nav .nav-links                       { display: none; }
-nav .nav-links.open                  { display: flex !important; }
-body.at-hero nav .nav-hamburger      { display: none !important; }
-body.at-hero nav .nav-links          { display: flex !important; }
-body.at-hero nav .nav-links.open     { display: flex !important; }
-/* Mobile: always hamburger regardless */
+
+
+
+/* ══════════════════════════════════════════
+   NAV STATE – single source of truth
+   Default: hamburger visible, links hidden
+   body.at-hero: links visible, hamburger hidden (desktop only)
+   ══════════════════════════════════════════ */
+
+/* Default (all pages, all sizes): hamburger ☰ */
+#mainNav .nav-hamburger { display: flex; }
+#mainNav .nav-links     { display: none; }
+#mainNav .nav-links.open { display: flex !important; flex-direction: column; }
+
+/* Hero page, desktop only: full links */
+@media (min-width: 769px) {
+  body.at-hero #mainNav .nav-hamburger { display: none; }
+  body.at-hero #mainNav .nav-links     { display: flex; }
+}
+
+/* Dropdown: desktop (right-aligned panel) */
+@media (min-width: 769px) {
+  #mainNav .nav-links.open {
+    position: fixed !important;
+    top: 68px !important;
+    right: 0 !important;
+    left: auto !important;
+    width: 240px !important;
+    flex-direction: column !important;
+    background: #fff;
+    border: 1px solid var(--gray-100);
+    border-top: 3px solid var(--ku-green);
+    border-radius: 0 0 0 8px;
+    padding: 6px 0;
+    z-index: 9999;
+    box-shadow: -4px 10px 30px rgba(13,59,30,0.18);
+    animation: menuDrop .18s ease;
+    z-index: 10001 !important;
+  }
+  #mainNav .nav-links.open li   { border-bottom: 1px solid var(--gray-100); }
+  #mainNav .nav-links.open li:last-child { border-bottom: none; }
+  #mainNav .nav-links.open a    { display: block; padding: 14px 22px; font-size: 14px; font-weight: 500; color: var(--ink); }
+  #mainNav .nav-links.open a:hover  { background: var(--ku-pale); color: var(--ku-green); }
+  #mainNav .nav-links.open a.active { color: var(--ku-green); font-weight: 700; background: var(--ku-pale); border-left: 3px solid var(--ku-green); padding-left: 19px; }
+}
+
+/* Dropdown: mobile (full width) */
 @media (max-width: 768px) {
-  nav .nav-hamburger              { display: flex !important; }
-  nav .nav-links                  { display: none !important; }
-  nav .nav-links.open             { display: flex !important; }
-  body.at-hero nav .nav-hamburger { display: flex !important; }
-  body.at-hero nav .nav-links     { display: none !important; }
+  #mainNav .nav-links.open {
+    position: fixed !important;
+    top: 56px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    flex-direction: column !important;
+    background: #fff;
+    border-bottom: 2px solid var(--ku-green);
+    padding: 6px 0;
+    z-index: 9999;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    z-index: 10001 !important;
+  }
+  #mainNav .nav-links.open li   { border-bottom: 1px solid var(--gray-100); }
+  #mainNav .nav-links.open li:last-child { border-bottom: none; }
+  #mainNav .nav-links.open a    { display: block; padding: 13px 20px; font-size: 14px; color: var(--ink); }
+  #mainNav .nav-links.open a.active { color: var(--ku-green); font-weight: 700; }
 }
 
 </style>
@@ -1467,13 +1518,18 @@ body.at-hero nav .nav-links.open     { display: flex !important; }
   }
 
   /* ── setAtHero: controls body.at-hero class ── */
+  var wasAtHero = null; /* track previous state */
   function setAtHero(atHero) {
     if (atHero) {
       body.classList.add('at-hero');
     } else {
       body.classList.remove('at-hero');
+    }
+    /* Only close menu when hero state transitions TRUE→FALSE */
+    if (wasAtHero === true && atHero === false) {
       closeMenu();
     }
+    wasAtHero = atHero;
   }
 
   /* ── checkHero: viewport-relative, works in any container ── */
@@ -1500,19 +1556,18 @@ body.at-hero nav .nav-links.open     { display: flex !important; }
     }
   }
 
-  /* ── rAF loop — always runs, no scroll comparison guard ── */
-  function loop() {
+  /* ── Poll checkHero every 200ms, skip while menu is open ── */
+  setInterval(function() {
+    /* Don't change nav state while menu is open */
+    if (navList && navList.classList.contains('open')) return;
     checkHero();
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-
-  /* ── setInterval backup (60ms) ── */
-  setInterval(checkHero, 60);
+  }, 200);
+  checkHero(); /* run immediately on load */
 
   /* ── Hamburger toggle ── */
   if (ham && navList) {
-    ham.addEventListener('click', function (e) {
+    function toggleMenu(e) {
+      e.preventDefault();
       e.stopPropagation();
       var isOpen = ham.classList.toggle('open');
       navList.classList.toggle('open');
@@ -1520,13 +1575,20 @@ body.at-hero nav .nav-links.open     { display: flex !important; }
       var ic = ham.querySelector('.ham-icon-close');
       if (io) io.style.display = isOpen ? 'none'  : 'block';
       if (ic) ic.style.display = isOpen ? 'block' : 'none';
-    });
+    }
+    ham.addEventListener('click',    toggleMenu);
+    ham.addEventListener('touchend', toggleMenu, { passive: false });
     navList.querySelectorAll('a').forEach(function (a) {
       a.addEventListener('click', function () { closeMenu(); });
     });
-    document.addEventListener('click', function (e) {
-      if (!e.target.closest('nav')) closeMenu();
-    });
+    /* Close when tapping outside nav – use both click and touchstart */
+    function outsideClose(e) {
+      if (navList.classList.contains('open') && !e.target.closest('nav')) {
+        closeMenu();
+      }
+    }
+    document.addEventListener('click',      outsideClose, { passive: true });
+    document.addEventListener('touchstart', outsideClose, { passive: true });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeMenu();
     });
